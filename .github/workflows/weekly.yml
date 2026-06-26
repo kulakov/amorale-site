@@ -30,6 +30,9 @@ jobs:
 
       - name: Scan Author.Today (rebuild ranking)
         if: ${{ inputs.skip_scan != true }}
+        env:
+          AT_LOGIN: ${{ secrets.AT_LOGIN }}
+          AT_PASSWORD: ${{ secrets.AT_PASSWORD }}
         run: |
           python scan.py
           test -s at_moral_final.json || (echo "scan produced no data" && exit 1)
