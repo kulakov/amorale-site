@@ -78,6 +78,15 @@ def scan_query(qs):
 
 def main():
     open(LOG, "w").close(); t0 = time.time()
+    # Safety net: never silently regress an adult-inclusive dataset to guest-only.
+    if TOKEN == "guest" and os.path.exists(FINAL):
+        try:
+            if any(x.get("adult") for x in json.load(open(FINAL, encoding="utf-8"))):
+                logline("ABORT: guest token but current data includes 18+ — refusing to "
+                        "overwrite with a non-adult scan. Set AT_LOGIN/AT_PASSWORD secrets.")
+                raise SystemExit(1)
+        except (ValueError, OSError):
+            pass
     works = {}
     def add(ws):
         for w in ws: works.setdefault(w["id"], w)
