@@ -180,5 +180,29 @@ apply();
 </body>
 </html>
 """
+# --- Sender (newsletter) universal script + optional inline subscribe form ---
+SENDER_ACCOUNT = "01f18fb82f5297"
+SENDER_FORM_ID = ""  # paste the data-sender-form-id here to render an inline form under the table
+sender_universal = """
+<script>
+  (function (s, e, n, d, er) {
+    s['Sender'] = er;
+    s[er] = s[er] || function () { (s[er].q = s[er].q || []).push(arguments) }, s[er].l = 1 * new Date();
+    s[er].on = function(event, callback) { s[er].listeners = s[er].listeners || {}; (s[er].listeners[event] = s[er].listeners[event] || []).push(callback); };
+    var a = e.createElement(n), m = e.getElementsByTagName(n)[0];
+    a.async = 1; a.src = d; m.parentNode.insertBefore(a, m)
+  })(window, document, 'script', 'https://cdn.sender.net/accounts_resources/universal.js', 'sender');
+  sender('%s')
+</script>
+""" % SENDER_ACCOUNT
+sender_inline = ("""
+<div style="max-width:560px;margin:36px auto 0">
+  <div style="font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-bottom:8px">Подписка на обновления</div>
+  <div style="font-size:14px;color:var(--mut);margin-bottom:12px">Раз в неделю — кто вошёл в топ-100 и кто поднялся. Без спама.</div>
+  <div class="sender-form-field" data-sender-form-id="%s"></div>
+</div>
+""" % SENDER_FORM_ID) if SENDER_FORM_ID else ""
+
+page = page.replace("</body>", sender_inline + sender_universal + "</body>")
 open(OUT, "w", encoding="utf-8").write(page)
-print(f"wrote {OUT}  ({len(page)/1024:.0f} KB, {N} rows)")
+print(f"wrote {OUT}  ({len(page)/1024:.0f} KB, {N} rows)  sender_form={'yes' if SENDER_FORM_ID else 'universal-only'}")
