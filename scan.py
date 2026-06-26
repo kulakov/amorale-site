@@ -34,11 +34,16 @@ def resolve_token():
     login, pw = os.environ.get("AT_LOGIN"), os.environ.get("AT_PASSWORD")
     if login and pw:
         try:
-            d = _post(f"{API}/v1/account/login-by-password", {"login": login, "password": pw}, "guest")
+            payload = {"login": login, "password": pw}
+            tc = os.environ.get("AT_TRUSTED_CODE")
+            if tc: payload["trustedCode"] = tc          # trusts a new IP (CI), bypasses new-device 2FA
+            code = os.environ.get("AT_2FA_CODE")
+            if code: payload["code"] = code
+            d = _post(f"{API}/v1/account/login-by-password", payload, "guest")
             tok = d.get("token")
             if tok:
                 logline("auth: logged in via AT_LOGIN/AT_PASSWORD (18+ included)"); return tok
-            logline(f"auth: login response had no token ({list(d)[:5]}); falling back")
+            logline(f"auth: login response had no token (twoFactorType={d.get('twoFactorType')}); falling back")
         except Exception as e:
             logline(f"auth: login-by-password failed ({e}); falling back")
     if os.environ.get("AT_TOKEN"):
