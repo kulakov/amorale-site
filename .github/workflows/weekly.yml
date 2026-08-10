@@ -22,11 +22,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+
+      # Проверяем токен до скана: иначе протухший токен виден только через ~40 минут,
+      # в самом конце прогона. Не валим прогон — данные всё равно надо собрать и закоммитить.
+      - name: Preflight — Vercel token
+        continue-on-error: true
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npx --yes vercel@latest whoami --token "$VERCEL_TOKEN" \
+            || echo "::warning title=Vercel token invalid::Деплой в конце прогона упадёт. Обновить секрет VERCEL_TOKEN."
 
       - name: Scan Author.Today (rebuild ranking)
         if: ${{ inputs.skip_scan != true }}
@@ -50,7 +60,7 @@ jobs:
           git config user.email "bot@users.noreply.github.com"
           git add feed.xml prev_top.json at_moral_final.json index.html
           git commit -m "weekly update $(date -u +%F)" || echo "nothing to commit"
-          git push || echo "push skipped"
+          git push
 
       - name: Deploy to Vercel
         env:
